@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Craft CanvaS</title>
+    <style>
+        /* Dynamic Theme Variables */
+        :root {
+            --bg-main: #f8f9fd; --bg-card: #ffffff; --text-main: #1a1d23; --text-secondary: #64748b;
+            --soft-purple: #9d8df1; --watermelon-pink: #FF7B7B; --border-radius: 18px;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05); --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+            --border-color: rgba(128, 128, 128, 0.15); --accent-glow: 0 0 0 transparent;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family, 'Segoe UI', system-ui, sans-serif); }
+        body { display: flex; height: 100vh; background-color: var(--bg-main); color: var(--text-main); overflow: hidden; transition: background-color 0.4s, color 0.4s; }
+        
+        #sidebar { width: 240px; background-color: var(--bg-card); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 24px; z-index: 10; transition: 0.4s; }
+        .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.3rem; margin-bottom: 40px; color: var(--text-main); }
+        .nav-group { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--border-radius); cursor: pointer; color: var(--text-secondary); font-weight: 600; transition: 0.3s; }
+        .nav-item:hover { background-color: var(--border-color); color: var(--text-main); transform: translateX(4px); }
+        .nav-item.active { background-color: var(--soft-purple); color: #fff !important; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+
+        #main-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        #header { padding: 32px 40px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .greeting h1 { font-size: 2rem; margin-bottom: 4px; font-weight: 800; }
+        .greeting p { color: var(--soft-purple); font-weight: 600; font-size: 1.1rem; }
+        #content-area { flex-grow: 1; padding: 0 40px 40px 40px; overflow-y: auto; display: flex; flex-direction: column; }
+        
+        .card, .details-container, .modal-content, .details-header-card { 
+            background: var(--bg-card); border-radius: var(--border-radius); 
+            box-shadow: var(--shadow-md), var(--accent-glow); padding: 24px; 
+            border: 1px solid var(--border-color); color: var(--text-main); transition: 0.4s;
+        }
+        
+        .search-box, .mod-select, .mod-search-bar { 
+            background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-color); 
+            border-radius: var(--border-radius); padding: 12px 24px; font-size: 1rem; outline: none; transition: 0.3s; width: 100%;
+        }
+        
+        .action-button { padding: 14px 28px; border-radius: 40px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-weight: 700; cursor: pointer; transition: 0.3s; box-shadow: var(--shadow-sm); }
+        .action-button.primary { background: var(--soft-purple); color: #fff; border: none; }
+        .action-button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        .page-section { display: none; height: 100%; flex-grow: 1; }
+        .page-section.active { display: flex; flex-direction: column; }
+
+        /* MOD UI GRID & CARDS */
+        .mod-layout { display: flex; height: 100%; background: var(--bg-card); border-radius: var(--border-radius); overflow: hidden; border: 1px solid var(--border-color); }
+        .mod-sidebar { width: 260px; background: var(--bg-main); padding: 24px; border-right: 1px solid var(--border-color); overflow-y: auto; }
+        .mod-main { flex: 1; padding: 30px 40px; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg-card);}
+        .mod-sidebar-title { color: var(--text-main); font-size: 0.9rem; font-weight: 700; margin: 15px 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .mod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+        .mod-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 20px; display: flex; gap: 16px; cursor: pointer; transition: 0.3s; height: 140px; overflow: hidden; }
+        .mod-card:hover { border-color: var(--soft-purple); transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .mod-icon { width: 64px; min-width: 64px; height: 64px; border-radius: 12px; object-fit: cover; background: var(--bg-main); }
+        
+        .mod-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .mod-header { display: flex; flex-direction: column; margin-bottom: 6px; }
+        .mod-title { font-weight: 800; font-size: 1.05rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mod-author { font-size: 0.8rem; color: var(--text-secondary); }
+        .mod-desc { font-size: 0.85rem; color: var(--text-secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .mod-tags { display: flex; gap: 6px; margin-top: auto; overflow: hidden; }
+        .mod-tag { font-size: 0.65rem; padding: 4px 8px; background: rgba(157, 141, 241, 0.15); color: var(--soft-purple); border-radius: 8px; font-weight: 800; text-transform: uppercase; }
+        .mod-stats { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); min-width: 70px; }
+
+        /* Profile & Tags */
+        .profile-widget { display: flex; align-items: center; gap: 12px; background: var(--bg-card); padding: 6px 16px 6px 6px; border-radius: 40px; box-shadow: var(--shadow-sm); cursor: pointer; transition: 0.2s; border: 1px solid var(--border-color); }
+        .profile-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: var(--soft-purple); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        
+        .ui-tag { padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; display: inline-block; box-shadow: var(--shadow-sm); margin-right: 8px; letter-spacing: 0.5px; }
+        .tag-a { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #4a004a; }
+        .tag-b { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); color: #fff; }
+        .tag-c { background: linear-gradient(270deg, #ff0000, #ff7f00, #ffcc00, #00ff00, #0000ff, #4b0082, #9400d3); background-size: 400% 400%; animation: rainbowGlow 3s ease infinite; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3); }
+        @keyframes rainbowGlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        .horizontal-scroll { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 30px; }
+        .horizontal-scroll::-webkit-scrollbar { height: 6px; }
+        .horizontal-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 999; backdrop-filter: blur(5px); }
+
+        /* UI Transition Animations */
+        body[data-theme="white"] .page-section.active { animation: fadeUp 0.4s ease forwards; }
+        body[data-theme="black"] .page-section.active { animation: shadowPulse 0.5s ease forwards; }
+        body[data-theme="enderman"] .page-section.active { animation: glitchIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        body[data-theme="minecraft"] .page-section.active { animation: blockDrop 0.4s steps(4) forwards; }
+        body[data-theme="red"] .page-section.active { animation: aggressiveSlide 0.4s ease forwards; }
+        body[data-theme="green"] .page-section.active { animation: smoothGrow 0.5s ease forwards; }
+        body[data-theme="purple"] .page-section.active { animation: royalReveal 0.6s ease forwards; }
+        body[data-theme="windows"] .page-section.active { animation: fluentFade 0.4s ease-out forwards; }
+        body[data-theme="android"] .page-section.active { animation: materialRipple 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shadowPulse { 0% { opacity: 0; filter: brightness(0.5); } 100% { opacity: 1; filter: brightness(1); } }
+        @keyframes glitchIn { 0% { opacity: 0; transform: translateX(-10px) skewX(10deg); filter: hue-rotate(90deg); } 100% { opacity: 1; transform: translateX(0) skewX(0); filter: hue-rotate(0); } }
+        @keyframes blockDrop { 0% { opacity: 0; transform: translateY(-40px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes aggressiveSlide { 0% { opacity: 0; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes smoothGrow { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes royalReveal { 0% { opacity: 0; filter: blur(10px); } 100% { opacity: 1; filter: blur(0); } }
+        @keyframes fluentFade { 0% { opacity: 0; transform: translateY(10px) scale(0.98); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes materialRipple { 0% { opacity: 0; clip-path: circle(10% at 50% 50%); } 100% { opacity: 1; clip-path: circle(150% at 50% 50%); } }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <div class="brand">
+            <span>🍉</span> Craft CanvaS
+        </div>
+        <div class="nav-group">
+            <div id="nav-profile" class="nav-item" onclick="switchTab(this, 'profile')"><span>👤</span> My Profile</div>
+            <div class="nav-item active" onclick="switchTab(this, 'mods')"><span>⛏️</span> Mod Manager</div>
+            <div class="nav-item" onclick="switchTab(this, 'local-mods')"><span>📁</span> Local Inspector</div>
+            <div class="nav-item" onclick="switchTab(this, 'launcher')"><span>🎮</span> Launcher</div>
+            <div class="nav-item" onclick="switchTab(this, 'editor')"><span>🖌️</span> Image Editor</div>
+            <div class="nav-item" onclick="switchTab(this, 'web')"><span>🌐</span> Websites</div>
+            <div class="nav-item" onclick="switchTab(this, 'creator')"><span>🎥</span> Creator Hub</div>
+            <div class="nav-item" onclick="switchTab(this, 'chat')"><span>💬</span> Global Chat</div>
+            <div class="nav-item" onclick="switchTab(this, 'shop')"><span>🛒</span> Theme Shop</div>
+        </div>
+    </div>
+    
+    <div id="main-wrapper">
+        <div id="header">
+            <div class="greeting">
+                <h1 id="user-greeting">Hello, Creator!</h1>
+                <p id="sub-greeting">How can I help you today?</p>
+            </div>
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <button class="action-button accent" onclick="document.getElementById('image-upload').click()">📁 Add Image</button>
+                <div class="profile-widget" onclick="switchTab(document.getElementById('nav-profile'), 'profile')">
+                    <img id="widget-avatar" src="" class="profile-avatar" style="display: none;">
+                    <div id="widget-initial" class="profile-avatar">?</div>
+                    <div style="font-weight: 700; color: var(--text-main);" id="widget-name">Guest</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-area">
+            
+            <div id="profile" class="page-section">
+                <div class="card" style="min-height: calc(100vh - 180px); display: flex; flex-direction: column; align-items: center; padding: 60px 40px;">
+                    <div id="profile-page-initial" style="width: 120px; height: 120px; border-radius: 50%; background: var(--soft-purple); color: white; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; font-weight: 800; box-shadow: var(--shadow-md); margin-bottom: 20px;">?</div>
+                    <h2 id="profile-page-name" style="font-size: 2.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">Guest</h2>
+                    <p style="color: var(--text-secondary); font-size: 1.1rem; font-weight: 600; margin-bottom: 30px;">Content Creator</p>
+                    
+                    <div style="display: flex; gap: 24px; width: 100%; max-width: 700px; margin-bottom: 40px;">
+                        <div style="flex: 1; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; text-align: center;">
+                            <div style="font-size: 0.9rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Your Wallet</div>
+                            <div style="font-size: 2.5rem; font-weight: 800; color: #fbbf24;"><span id="profile-coin-balance">0</span> 🪙</div>
+                        </div>
+                        <div style="flex: 1.5; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; text-align: left;">
+                            <div style="font-size: 0.9rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Achievements & Tags</div>
+                            <div id="profile-badges-container" style="min-height: 40px; display: flex; align-items: center; flex-wrap: wrap;"></div>
+                        </div>
+                    </div>
+
+                    <div style="width: 100%; max-width: 700px; text-align: left; margin-bottom: 40px;">
+                        <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 16px;">UI Wardrobe</h3>
+                        <div id="profile-wardrobe-grid" style="display: flex; gap: 12px; flex-wrap: wrap;"></div>
+                    </div>
+
+                    <div style="display: flex; gap: 16px; width: 100%; max-width: 700px; border-top: 1px solid var(--border-color); padding-top: 30px;">
+                        <button class="action-button" style="flex: 1; color: var(--watermelon-pink); border-color: var(--border-color);" onclick="clearLocalData()">🧹 Clear Cached Data</button>
+                        <button class="action-button primary" style="flex: 1; background: var(--watermelon-pink);" onclick="logoutUser()">🚪 Secure Log Out</button>
+                    </div>
+
+                    <div style="margin-top: 40px; text-align: center; width: 100%;">
+                        <iframe src="https://abhehe123.github.io/craftcanvas-launcher/ad-banner.html" width="728" height="90" frameborder="0" scrolling="no" style="border-radius: 8px; border: 1px solid var(--border-color);"></iframe>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="mods" class="page-section active">
+                <div id="mod-browse-view" class="mod-layout">
+                    <div class="mod-sidebar">
+                        <div style="color: var(--soft-purple); font-size: 20px; font-weight: 800; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px;">
+                            <span>📦</span> Modrinth DB
+                        </div>
+                        <h3 class="mod-sidebar-title">Sort By</h3>
+                        <select id="sort-filter" class="mod-select" onchange="executeSearch()"><option value="relevance">Relevance</option><option value="downloads">Downloads</option><option value="follows">Followers</option><option value="newest">Date Published</option><option value="updated">Date Updated</option></select>
+                        <h3 class="mod-sidebar-title">Project Type</h3>
+                        <select id="type-filter" class="mod-select" onchange="executeSearch()"><option value="mod">Mods</option><option value="resourcepack">Resource Packs</option><option value="shader">Shaders</option><option value="modpack">Modpacks</option></select>
+                        <h3 class="mod-sidebar-title">Game Version</h3>
+                        <select id="version-filter" class="mod-select" onchange="executeSearch()"><option value="">All Versions</option></select>
+                        <h3 class="mod-sidebar-title">Loader</h3>
+                        <select id="loader-filter" class="mod-select" onchange="executeSearch()"><option value="">All Loaders</option></select>
+                        <h3 class="mod-sidebar-title">Content Category</h3>
+                        <select id="category-filter" class="mod-select" onchange="executeSearch()"><option value="">All Categories</option><option value="adventure">Adventure</option><option value="cursed">Cursed</option><option value="decoration">Decoration</option><option value="economy">Economy</option><option value="equipment">Equipment</option><option value="food">Food</option><option value="game-mechanics">Game Mechanics</option><option value="library">Library</option><option value="magic">Magic</option><option value="management">Management</option><option value="minigame">Minigame</option><option value="mobs">Mobs</option><option value="optimization">Optimization</option><option value="social">Social</option><option value="storage">Storage</option><option value="technology">Technology</option><option value="transportation">Transportation</option><option value="utility">Utility</option><option value="worldgen">World Generation</option></select>
+                    </div>
+                    
+                    <div class="mod-main">
+                        <input type="text" id="search-input" class="mod-search-bar" style="margin-bottom: 20px;" placeholder="Search for mods, shaders, plugins and more...">
+                        <div id="mod-grid" class="mod-grid"></div>
+                        <div id="pagination-controls" style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 30px; padding-bottom: 20px;"></div>
+                        <div id="recommended-container" style="display: none;">
+                            <h2 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: var(--text-main);">✨ Recommended For You</h2>
+                            <div id="recommended-grid" class="horizontal-scroll"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="mod-details-view" style="display: none; height: 100%;">
+                    <div class="details-container">
+                        <button class="action-button" onclick="closeModDetails()">← Back to Search</button>
+                        <div id="mod-details-content" style="margin-top: 20px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="local-mods" class="page-section">
+                <div class="card" style="min-height: calc(100vh - 180px); display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div>
+                            <h2 style="font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; color: var(--text-main);">.minecraft/mods</h2>
+                            <p style="color: var(--text-secondary); font-weight: 600;">Inspect and manage your locally installed files.</p>
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px; background: var(--bg-main); padding: 6px; border-radius: 12px; border: 1px solid var(--border-color); align-items: center;">
+                            <button class="action-button" style="padding: 8px 12px; box-shadow: none; border: 1px solid var(--border-color); font-size: 0.9rem;" onclick="loadLocalMods()">🔄 Refresh</button>
+                            <button class="action-button" style="padding: 8px 12px; box-shadow: none; border: 1px solid var(--border-color); font-size: 0.9rem;" onclick="window.electronAPI.openModsFolder()">📂 Open Folder</button>
+                            
+                            <div style="width: 1px; height: 20px; background: var(--border-color); margin: 0 4px;"></div> 
+                            <select id="local-loader-filter" class="search-box" style="margin-bottom: 0; padding: 8px 16px; outline: none; border: none; cursor: pointer; background: transparent; width: auto;" onchange="renderLocalMods()">
+                                <option value="all">All Loaders</option><option value="fabric">Fabric</option><option value="forge">Forge</option><option value="optifine">OptiFine</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+                        <button id="btn-active-mods" class="action-button active" style="flex: 1; border: none; background: var(--bg-main); box-shadow: var(--shadow-sm);" onclick="toggleLocalView('active')">🟢 Active Mods</button>
+                        <button id="btn-trash-mods" class="action-button" style="flex: 1; border: none; background: transparent; box-shadow: none; color: var(--watermelon-pink);" onclick="toggleLocalView('trash')">🗑️ Trash Bin</button>
+                    </div>
+
+                    <div id="local-mods-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                    <div id="trash-mods-list" style="display: none; flex-direction: column; gap: 10px;"></div>
+
+                    <div style="margin-top: auto; padding-top: 30px; text-align: center;">
+                        <div style="font-size: 10px; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Advertisement</div>
+                        <iframe src="https://abhehe123.github.io/craftcanvas-launcher/ad-banner.html" width="728" height="90" frameborder="0" scrolling="no" style="border-radius: 8px; background: var(--bg-main); border: 1px solid var(--border-color);"></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <div id="launcher" class="page-section">
+                <div class="card" style="max-width: 600px; margin: 0 auto; text-align: center; padding: 40px;">
+                    <h2 style="margin-bottom: 10px; font-size: 1.8rem; color: var(--text-main);">Minecraft Launcher</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 30px;">Select your environment and launch the game.</p>
+
+                    <div style="display: flex; gap: 16px; margin-bottom: 30px; text-align: left;">
+                        <div style="flex: 1;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-main);">Game Version</label>
+                            <input type="text" id="mc-version" class="search-box" list="mc-versions-list" value="1.20.4" placeholder="e.g. 1.20.4">
+                            <datalist id="mc-versions-list"></datalist>
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-main);">Auto-Install Loader</label>
+                            <select id="mc-loader" class="search-box">
+                                <option value="vanilla">Vanilla (None)</option><option value="fabric">Fabric</option><option value="forge">Forge</option><option value="neoforge">NeoForge</option><option value="quilt">Quilt</option><option value="optifine">OptiFine</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-bottom: 30px; background: var(--bg-main); padding: 6px; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <button id="tab-offline" class="action-button active" style="flex: 1; border: none; background: var(--bg-card); box-shadow: var(--shadow-sm);" onclick="toggleAuth('offline')">Offline Mode Free to Play</button>
+                        <button id="tab-premium" class="action-button" style="flex: 1; border: none; background: transparent; box-shadow: none;" onclick="toggleAuth('premium')">Premium (Microsoft Paid)</button>
+                    </div>
+
+                    <div id="offline-inputs" style="text-align: left; margin-bottom: 30px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-main);">Username</label>
+                        <input type="text" id="mc-username" class="search-box" value="WatermelonDev" placeholder="Enter offline username...">
+                    </div>
+
+                    <div id="premium-inputs" style="text-align: left; margin-bottom: 30px; display: none; background: rgba(157, 141, 241, 0.1); padding: 15px; border-radius: 12px; color: var(--soft-purple); border: 1px solid var(--soft-purple);">
+                        <span style="font-size: 1.2rem;">🔒</span> <strong>Secure Login:</strong> You will be prompted to log in safely via Microsoft.
+                    </div>
+
+                    <button id="launch-btn" class="action-button primary" style="width: 100%; font-size: 1.1rem; padding: 16px;" onclick="startLaunch()">🚀 Play</button>
+
+                    <div id="launch-progress-container" style="display: none; margin-top: 30px; text-align: left;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem;">
+                            <span id="launch-task" style="color: var(--text-secondary); font-weight: 500;">Initializing...</span>
+                            <span id="launch-percentage" style="font-weight: 700; color: var(--soft-purple);">0%</span>
+                        </div>
+                        <div style="width: 100%; background: var(--bg-main); border-radius: 10px; height: 10px; overflow: hidden; border: 1px solid var(--border-color); margin-bottom: 24px;">
+                            <div id="launch-progress-bar" style="width: 0%; height: 100%; background: var(--watermelon-pink); transition: width 0.3s ease;"></div>
+                        </div>
+
+                        <div style="display: flex; gap: 16px; justify-content: center; background: var(--bg-main); padding: 16px; border-radius: 16px; border: 1px solid var(--border-color);">
+                            <iframe src="https://abhehe123.github.io/craftcanvas-launcher/ad-square.html" width="300" height="250" frameborder="0" scrolling="no" style="border-radius: 8px; background: var(--bg-card);"></iframe>
+                            <iframe src="https://abhehe123.github.io/craftcanvas-launcher/ad-square.html" width="300" height="250" frameborder="0" scrolling="no" style="border-radius: 8px; background: var(--bg-card);"></iframe>
+                            <iframe src="https://abhehe123.github.io/craftcanvas-launcher/ad-square.html" width="300" height="250" frameborder="0" scrolling="no" style="border-radius: 8px; background: var(--bg-card);"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="editor" class="page-section">
+                <div class="card" style="height: calc(100vh - 180px); padding: 0; overflow: hidden; position: relative;">
+                    <input type="file" id="image-upload" style="display: none;" accept="image/*" onchange="handleImageUpload(event)">
+                    <div id="filerobot-editor" style="width: 100%; height: 100%;"></div>
+                </div>
+            </div>
+
+            <div id="web" class="page-section">
+                <div class="card" style="height: calc(100vh - 180px); display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+                    <div class="web-nav" style="padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; gap: 12px; background: var(--bg-main);">
+                        <button class="action-button active" style="box-shadow: none;" onclick="loadWebsite(this, 'http://awakegameswatermelon.eu.cc')">Awake Games</button>
+                        <button class="action-button" style="box-shadow: none;" onclick="loadWebsite(this, 'http://awakeplatform.eu.cc')">Awake Platform</button>
+                    </div>
+                    <iframe id="website-frame" src="http://awakegameswatermelon.eu.cc" frameborder="0" style="flex-grow: 1; width: 100%;"></iframe>
+                </div>
+            </div>
+            
+            <div id="creator" class="page-section">
+                <div class="card" style="max-width: 800px; margin: 0 auto; text-align: center; padding: 50px;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">🎬</div>
+                    <h2 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 16px; letter-spacing: -0.5px; color: var(--text-main);">Grow With Us!</h2>
+                    <p style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6; margin-bottom: 40px;">
+                        Are you a content creator? Create a video showcasing your favorite mods or how you build modpacks with Craft CanvaS! Share the official download link below with your viewers to help the community grow.
+                    </p>
+                    
+                    <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-bottom: 40px;">
+                        <h3 style="font-size: 1rem; color: var(--soft-purple); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Official Share Link</h3>
+                        <div style="display: flex; gap: 12px;">
+                            <input type="text" class="search-box" style="margin-bottom: 0; font-weight: 600;" value="https://awake-games.itch.io/craftcanvas-modding-suite-minecraft" readonly>
+                            <button class="action-button primary" style="width: auto; padding: 12px 24px;" onclick="copyShareLink()">📋 Copy</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: center; gap: 40px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: 800; color: var(--text-main);" id="stat-downloads">--</div>
+                            <div style="color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Global App Downloads</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 40px; text-align: center;">
+                        <div style="font-size: 10px; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Advertisement</div>
+                        <iframe src="https://abhehe123.github.io/craftcanvas-launcher/ad-banner.html" width="728" height="90" frameborder="0" scrolling="no" style="border-radius: 8px; background: var(--bg-main); border: 1px solid var(--border-color);"></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chat" class="page-section">
+                <div class="card" style="height: calc(100vh - 180px); display: flex; flex-direction: column; padding: 0; overflow: hidden; background: var(--bg-card);">
+                    <div style="padding: 16px 24px; background: var(--bg-main); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; z-index: 2;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-main); font-weight: 800;">💬 Global Chat</h3>
+                            <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">Messages auto-delete after 10 minutes</span>
+                        </div>
+                    </div>
+                    
+                    <div id="chat-messages" style="flex-grow: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: var(--bg-card);">
+                    </div>
+                    
+                    <div style="background: var(--bg-main); border-top: 1px solid var(--border-color); text-align: center; padding: 10px 0;">
+                        <iframe src="https://abhehe123.github.io/craftcanvas-launcher/ad-banner.html" width="728" height="90" frameborder="0" scrolling="no" style="border-radius: 8px;"></iframe>
+                    </div>
+
+                    <div style="padding: 16px 24px; background: var(--bg-main); border-top: 1px solid var(--border-color); display: flex; gap: 12px; z-index: 2;">
+                        <input type="text" id="chat-input" class="search-box" style="margin-bottom: 0;" placeholder="Type a message... (Text, Emojis, and Links allowed)" onkeypress="if(event.key === 'Enter') sendChatMessage()" maxlength="250">
+                        <button class="action-button primary" style="width: auto; padding: 0 30px;" onclick="sendChatMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="shop" class="page-section">
+                <div class="card" style="min-height: calc(100vh - 180px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background: var(--bg-main); padding: 24px; border-radius: 20px; border: 1px solid var(--border-color);">
+                        <div>
+                            <h2 style="font-size: 2rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">Theme Shop</h2>
+                            <p style="color: var(--text-secondary); font-weight: 600;">Earn 20 coins every minute you use Craft CanvaS!</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Your Balance</div>
+                            <div style="font-size: 2.5rem; font-weight: 800; color: #fbbf24; text-shadow: 0 2px 10px rgba(251, 191, 36, 0.3);">
+                                <span id="coin-balance-display">0</span> 🪙
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="shop-grid" class="mod-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                    </div>
+
+                    <div style="margin-top: 30px; text-align: center;">
+                        <iframe src="https://abhehe123.github.io/craftcanvas-launcher/ad-banner.html" width="728" height="90" frameborder="0" scrolling="no" style="border-radius: 8px;"></iframe>
+                    </div>
+
+                </div>
+            </div>
+
+        </div> 
+    </div> 
+
+    <div id="onboarding-modal" class="modal-overlay" style="background: var(--bg-main); z-index: 2000; backdrop-filter: none;">
+        <div class="card" style="width: 420px; text-align: center; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+            <div style="font-size: 3rem; margin-bottom: 10px;">🍉</div>
+            <h2 style="font-size: 1.8rem; margin-bottom: 10px; color: var(--text-main);">Welcome to Craft CanvaS</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Create an account to save your creator profile to the cloud.</p>
+            
+            <div style="text-align: left; margin-bottom: 12px;">
+                <label style="font-weight: 700; font-size: 0.9rem; color: var(--text-secondary);">Display Name (For Sign Up)</label>
+                <input type="text" id="ob-name" class="search-box" style="margin-top: 8px; margin-bottom: 0;" placeholder="e.g. WatermelonDev">
+            </div>
+            <div style="text-align: left; margin-bottom: 12px;">
+                <label style="font-weight: 700; font-size: 0.9rem; color: var(--text-secondary);">Email</label>
+                <input type="email" id="ob-email" class="search-box" style="margin-top: 8px; margin-bottom: 0;" placeholder="you@email.com">
+            </div>
+            <div style="text-align: left; margin-bottom: 24px;">
+                <label style="font-weight: 700; font-size: 0.9rem; color: var(--text-secondary);">Password</label>
+                <input type="password" id="ob-password" class="search-box" style="margin-top: 8px; margin-bottom: 0;" placeholder="Minimum 6 characters">
+            </div>
+
+            <div style="text-align: left; margin-bottom: 24px; background: var(--bg-main); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; color: var(--text-main); font-size: 0.95rem;">
+                    <input type="checkbox" id="age-verify-check" style="width: 20px; height: 20px; accent-color: var(--soft-purple);">
+                    I confirm that I am 18 years of age or older.
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="action-button primary" style="flex: 1;" onclick="registerWithEmail()">Sign Up</button>
+                <button class="action-button" style="flex: 1;" onclick="loginWithEmail()">Log In</button>
+            </div>
+            <p id="ob-error" style="color: var(--watermelon-pink); margin-top: 15px; font-weight: 600; display: none;"></p>
+        </div>
+    </div>
+
+    <div id="download-modal" class="modal-overlay">
+        <div class="card" style="width: 400px;">
+            <h3 style="margin-bottom: 24px; font-size: 1.5rem; color: var(--text-main);">Download Selection</h3>
+            <div style="display: flex; flex-direction: column; gap: 16px; text-align: left;">
+                <div>
+                    <label style="display: block; font-size: 0.95rem; font-weight: 700; margin-bottom: 8px; color: var(--text-secondary);">Game Version</label>
+                    <select id="modal-version-select" class="search-box"></select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.95rem; font-weight: 700; margin-bottom: 8px; color: var(--text-secondary);">Mod Loader</label>
+                    <select id="modal-loader-select" class="search-box"></select>
+                </div>
+                <div style="display: flex; gap: 12px; margin-top: 20px;">
+                    <button class="action-button" style="flex: 1;" onclick="closeDownloadModal()">Cancel</button>
+                    <button class="action-button" style="flex: 1.5; border: 1px solid var(--soft-purple); color: var(--soft-purple);" onclick="executeDownload('normal', this)">💾 PC</button>
+                    <button class="action-button primary" style="flex: 1.5;" onclick="executeDownload('direct', this)">📥 Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="profile-modal" class="modal-overlay" style="z-index: 2000;">
+        <div class="card" style="width: 380px; padding: 40px 30px; text-align: center;">
+            <img id="profile-modal-avatar" src="" style="width: 84px; height: 84px; border-radius: 50%; margin: 0 auto 16px auto; background: var(--soft-purple); display: none; box-shadow: var(--shadow-sm);">
+            <div id="profile-modal-initial" style="width: 84px; height: 84px; border-radius: 50%; margin: 0 auto 16px auto; background: var(--soft-purple); color: white; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; box-shadow: var(--shadow-sm);">?</div>
+            
+            <h2 id="profile-modal-name" style="font-size: 1.6rem; margin-bottom: 6px; color: var(--text-main);">Guest</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 0.95rem;">Manage your Craft CanvaS account</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="action-button" onclick="closeProfileSettings()">Close Settings</button>
+                <button class="action-button" style="color: var(--watermelon-pink); border-color: var(--border-color);" onclick="clearLocalData()">
+                    <span style="font-size: 1.1rem;">🧹</span> Clear Local Data
+                </button>
+                <button class="action-button" style="background: var(--watermelon-pink); border: none; color: white;" onclick="logoutUser()">
+                    <span style="font-size: 1.1rem;">🚪</span> Log Out
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <script src="https://scaleflex.cloudimg.io/v7/plugins/filerobot-image-editor/latest/filerobot-image-editor.min.js"></script>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/editor.js"></script>
+
+    <script>
+        function switchTab(element, tabId) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            element.classList.add('active');
+            
+            const subGreeting = document.getElementById('sub-greeting');
+            
+            if(tabId === 'editor') subGreeting.innerText = "Ready to design something amazing?";
+            else if(tabId === 'web') subGreeting.innerText = "Check out our latest updates.";
+            else if(tabId === 'launcher') subGreeting.innerText = "Ready to play?";
+            else if(tabId === 'creator') subGreeting.innerText = "Share and grow with the community!";
+            else if(tabId === 'chat') subGreeting.innerText = "Hang out with other creators!";
+            else if(tabId === 'shop') subGreeting.innerText = "Customize your experience!";
+            else if(tabId === 'local-mods') subGreeting.innerText = "Managing your local files.";
+            else if(tabId === 'profile') subGreeting.innerText = "Your creator identity.";
+            else subGreeting.innerText = "How can I help you today?";
+
+            if(tabId === 'chat') {
+                loadChat();
+            } else if (typeof stopChatListener === 'function') {
+                stopChatListener(); 
+            }
+
+            if(tabId === 'local-mods') loadLocalMods(); 
+            if(tabId === 'profile' && typeof renderProfilePage === 'function') renderProfilePage();
+        }
+    </script>
+</body>
+</html>
