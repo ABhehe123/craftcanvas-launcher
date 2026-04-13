@@ -336,13 +336,6 @@ function sendChatMessage() {
     const text = input.value.trim();
     if (!text) return;
 
-    input.value = ''; 
-
-    db.collection('global_chat').add({
-        uid: userProfile.uid,
-        author: userProfile.name,
-        text: text,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
     }).then((docRef) => {
         activeSentMessages.push(docRef);
         setTimeout(() => {
@@ -380,15 +373,7 @@ if (window.electronAPI && window.electronAPI.onCleanupAndQuit) {
     });
 }
 
-const firebaseConfig = {
-    apiKey: "AIzaSyB-QkYOUKPIm0BAGXgyRsIJnIeg9XZrzjE",
-    authDomain: "craftcanvas-c76de.firebaseapp.com",
-    projectId: "craftcanvas-c76de",
-    storageBucket: "craftcanvas-c76de.firebasestorage.app",
-    messagingSenderId: "640072585191",
-    appId: "1:640072585191:web:c0c0e740845a57f79a3742",
-    measurementId: "G-6J6LTDZRQT"
-};
+
 
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
@@ -463,18 +448,7 @@ function handleAuthSuccess(user, displayName) {
             ownedThemes: cloudThemes,
             activeTheme: cloudActive,
             t: cloudTags 
-        };
-        
-        localStorage.setItem('cc_profile', JSON.stringify(userProfile));
-        updateProfileWidget();
-        applyTheme(userProfile.activeTheme);
-        renderShop();
-        startCoinGenerator(); 
-
-        db.collection('users').doc(user.uid).set({
-            username: userProfile.name,
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
+        }
     });
 }
 
@@ -515,19 +489,7 @@ function loginWithEmail() {
             document.getElementById('ob-error').innerText = "Invalid email or password.";
             document.getElementById('ob-error').style.display = 'block';
         });
-}
 
-function updateProfileWidget() {
-    if (!userProfile) return;
-    document.getElementById('widget-name').innerText = userProfile.name.split(' ')[0]; 
-    document.getElementById('user-greeting').innerText = `Hello, ${userProfile.name.split(' ')[0]}!`;
-    
-    if (userProfile.avatar) {
-        document.getElementById('widget-initial').style.display = 'none';
-        const avatarImg = document.getElementById('widget-avatar');
-        avatarImg.src = userProfile.avatar;
-        avatarImg.style.display = 'block';
-    } else {
         document.getElementById('widget-initial').innerText = userProfile.name.charAt(0).toUpperCase();
     }
 }
