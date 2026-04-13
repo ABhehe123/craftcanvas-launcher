@@ -16,19 +16,8 @@ async function fetchMods(query = '', type = 'mod', loader = '', version = '', ca
         if (!response.ok) throw new Error('Failed to fetch data from Modrinth');
         // Return the full data object so we can access total_hits for the page numbers!
         return await response.json(); 
-    } catch (error) {
-        console.error("Modrinth API Error:", error);
-        return { hits: [], total_hits: 0 };
-    }
-}
-
-async function fetchModDetails(projectId) {
-    const url = `${MODRINTH_API_URL}/project/${projectId}`;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch project details');
-        return await response.json();
-    } catch (error) {
+    } catch (
+        const response = aw
         console.error("Modrinth API Error:", error);
         return null;
     }
