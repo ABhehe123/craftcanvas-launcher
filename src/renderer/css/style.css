@@ -1,0 +1,34 @@
+/* Search Bar Styling */
+    .search-bar-container {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        background-color: #1E2029;
+        padding: 10px;
+        border-radius: 8px;
+    }
+
+    .search-bar-container input, .search-bar-container select {
+        background-color: #12141D;
+        color: white;
+        border: 1px solid #2A2D3A;
+        padding: 10px;
+        border-radius: 6px;
+        outline: none;
+    }
+
+    #search-input { flex-grow: 1; }
+
+    #search-btn {
+        background-color: #FF7B7B; /* Watermelon theme color */
+        color: #12141D;
+        border: none;
+        padding: 0 20px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    #search-btn:hover { background-color: #ff5e5e; }
