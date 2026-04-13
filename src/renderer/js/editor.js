@@ -20,22 +20,6 @@ function loadIntoEditor(imageSource) {
         source: imageSource,
         onSave: (editedImageObject, designState) => {
             const finalImageData = editedImageObject.imageBase64;
-            if (finalImageData) {
-                // Sends the edited image string to the backend (downloads folder)
-                window.electronAPI.downloadMod(finalImageData);
-            } else {
-                alert("Error generating image. Please try again.");
-            }
-        }
-    };
-
-    filerobotEditor = new FilerobotImageEditor(container, config);
-    filerobotEditor.render();
-}
-
-function handleImageUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function(f) {
