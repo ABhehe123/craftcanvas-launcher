@@ -11,12 +11,12 @@
     "pack": "electron-builder --dir"
   },
   "dependencies": {
-    "minecraft-launcher-core": "^latest",
-    "msmc": "^latest"
+    "minecraft-launcher-core": "^bababbababaeds",
+    "msmc": "^idntknow"
   },
   "devDependencies": {
-    "electron": "^28.0.0",
-    "electron-builder": "^24.9.1"
+    "electron": "^22.0.0",
+    "electron-builder": "^22.9.1"
   },
   "build": {
     "appId": "com.watermelon.craftcanvas",
