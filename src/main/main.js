@@ -10,22 +10,6 @@ const { Auth } = require('msmc');
 // --- CENTRALIZED JAVA CONFIGURATION ---
 const JAVA_EXEC = "C:\\Program Files\\Java\\jdk-17\\bin\\java.exe";
 
-
-let mainWindow;
-let tray = null;
-let activeDownloadFolder = null; 
-
-// --- ANTI-CORRUPTION FAILSAFE ---
-app.on('before-quit', () => {
-    if (activeDownloadFolder && fs.existsSync(activeDownloadFolder)) {
-        console.log("App closed during download! Deleting corrupted files...");
-        fs.rmSync(activeDownloadFolder, { recursive: true, force: true });
-    }
-});
-
-app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
-app.commandLine.appendSwitch('disable-http-cache');
-
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) app.quit();
 else {
@@ -97,22 +81,7 @@ function createWindow () {
             return downloadFile(redirectUrl, dest).then(resolve).catch(reject);
         }
         
-        // Reject anything that isn't 200 OK
-        if (response.statusCode !== 200) {
-            file.close();
-            fs.unlink(dest, () => {});
-            return reject(new Error(`Download failed: HTTP Status ${response.statusCode} from ${requestUrl}`));
-        }
-        
-        response.pipe(file);
-        file.on('finish', () => { file.close(); resolve(); });
-      }).on('error', (err) => { 
-          file.close(); 
-          fs.unlink(dest, () => {}); 
-          reject(err); 
-      });
-    });
-  }
+
 
 // --- HELPER: Run hidden terminal commands ---
   function execPromise(command) {
@@ -146,55 +115,6 @@ app.whenReady().then(() => {
     const modsDir = path.join(rootDataPath, 'mods');
     const trashDir = path.join(rootDataPath, 'mods_trash');
 
-    // Ensure folders exist for new players!
-    if (!fs.existsSync(rootDataPath)) fs.mkdirSync(rootDataPath, { recursive: true });
-    if (!fs.existsSync(modsDir)) fs.mkdirSync(modsDir, { recursive: true });
-    if (!fs.existsSync(trashDir)) fs.mkdirSync(trashDir, { recursive: true });
-
-// --- NEW: LOCAL MOD IPC HANDLERS ---
-    ipcMain.handle('get-local-mods', () => {
-        try {
-            if (!fs.existsSync(modsDir)) return [];
-            // FIX: Now accepts .JAR, .jar, and .zip files safely!
-            return fs.readdirSync(modsDir)
-                .filter(f => f.toLowerCase().endsWith('.jar') || f.toLowerCase().endsWith('.zip'))
-                .map(f => ({ name: f }));
-        } catch (e) {
-            return [];
-        }
-    });
-    ipcMain.handle('move-to-trash', (event, filename) => {
-        try { 
-            fs.renameSync(path.join(modsDir, filename), path.join(trashDir, filename)); 
-            return true; 
-        } catch (e) { 
-            console.error("Move to trash error:", e);
-            return false; 
-        }
-    });
-
-    ipcMain.handle('recover-from-trash', (event, filename) => {
-        try { 
-            fs.renameSync(path.join(trashDir, filename), path.join(modsDir, filename)); 
-            return true; 
-        } catch (e) { 
-            console.error("Recover from trash error:", e);
-            return false; 
-        }
-        
-    });
-    // ✨ NEW: Opens the actual .minecraft/mods folder in Windows Explorer!
-    ipcMain.on('open-mods-folder', () => {
-        if (fs.existsSync(modsDir)) {
-            shell.openPath(modsDir);
-        }
-    });
-    
-
-    ipcMain.handle('get-trash-mods', () => {
-        try {
-            if (!fs.existsSync(trashDir)) return [];
-            return fs.readdirSync(trashDir)
                 .filter(f => f.toLowerCase().endsWith('.jar') || f.toLowerCase().endsWith('.zip'))
                 .map(f => ({ name: f }));
         } catch (e) {
@@ -327,43 +247,7 @@ app.whenReady().then(() => {
                 }
             }
 
-            if (isPremium) {
-                if (mainWindow) mainWindow.webContents.send('launch-progress', { task: 'Waiting for Microsoft Login...', percentage: 10 });
-                const authManager = new Auth("select_account");
-                const xboxManager = await authManager.launch("electron");
-                const token = await xboxManager.getMinecraft();
-                authConfig = token.mclc(); 
-            } else {
-                authConfig = Authenticator.getAuth(username || "DevPlayer");
-            }
-
-            const opts = {
-                authorization: authConfig,
-                root: rootDataPath,
-                version: { 
-                    number: version, 
-                    type: "release",
-                    custom: targetVersion !== version ? targetVersion : undefined 
-                }, 
-                memory: { max: "6G", min: "2G" },
-                javaPath: JAVA_EXEC 
-            };
-
-            const versionFolder = path.join(rootDataPath, "versions", targetVersion);
-            activeDownloadFolder = versionFolder; 
-            
-            if (fs.existsSync(versionFolder)) {
-                if (mainWindow) mainWindow.webContents.send('launch-progress', { task: 'Verifying local game files...', percentage: 50 });
-            } else {
-                if (mainWindow) mainWindow.webContents.send('launch-progress', { task: 'Downloading fresh game assets...', percentage: 0 });
-            }
-
-            launcher.removeAllListeners('download-status');
-
-            launcher.on('download-status', (e) => {
-                const percentage = Math.round((e.current / e.total) * 100);
-                if (percentage % 5 === 0) {
-                    const prefix = fs.existsSync(versionFolder) ? "Verifying" : "Downloading";
+            " : "Downloading";
                     if (mainWindow) mainWindow.webContents.send('launch-progress', { task: `${prefix}: ${e.name}`, percentage });
                 }
             });
@@ -380,14 +264,7 @@ launcher.launch(opts).then((minecraftProcess) => {
                 }
                 if (minecraftProcess) {
                     minecraftProcess.on('close', (code) => {
-                        console.log("Minecraft closed with exit code:", code);
-                    });
-                }
-            }).catch((err) => {
-                console.error("Failed to launch:", err);
-                if (mainWindow) mainWindow.webContents.send('launch-error', err.message);
-            });
-
+                        
         } catch (err) {
             if (mainWindow) mainWindow.webContents.send('launch-error', err.message);
         }
