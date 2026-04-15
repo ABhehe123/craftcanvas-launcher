@@ -10,21 +10,7 @@
             --bg-main: #f8f9fd; --bg-card: #ffffff; --text-main: #1a1d23; --text-secondary: #64748b;
             --soft-purple: #9d8df1; --watermelon-pink: #FF7B7B; --border-radius: 18px;
             --shadow-sm: 0 2px 4px rgba(0,0,0,0.05); --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
-            --border-color: rgba(128, 128, 128, 0.15); --accent-glow: 0 0 0 transparent;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family, 'Segoe UI', system-ui, sans-serif); }
-        body { display: flex; height: 100vh; background-color: var(--bg-main); color: var(--text-main); overflow: hidden; transition: background-color 0.4s, color 0.4s; }
-        
-        #sidebar { width: 240px; background-color: var(--bg-card); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 24px; z-index: 10; transition: 0.4s; }
-        .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.3rem; margin-bottom: 40px; color: var(--text-main); }
-        .nav-group { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
-        .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--border-radius); cursor: pointer; color: var(--text-secondary); font-weight: 600; transition: 0.3s; }
-        .nav-item:hover { background-color: var(--border-color); color: var(--text-main); transform: translateX(4px); }
-        .nav-item.active { background-color: var(--soft-purple); color: #fff !important; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-
-        #main-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
-        #header { padding: 32px 40px; display: flex; justify-content: space-between; align-items: flex-start; }
+            --border-color: r
         .greeting h1 { font-size: 2rem; margin-bottom: 4px; font-weight: 800; }
         .greeting p { color: var(--soft-purple); font-weight: 600; font-size: 1.1rem; }
         #content-area { flex-grow: 1; padding: 0 40px 40px 40px; overflow-y: auto; display: flex; flex-direction: column; }
@@ -81,23 +67,12 @@
         .horizontal-scroll::-webkit-scrollbar { height: 6px; }
         .horizontal-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 999; backdrop-filter: blur(5px); }
-
-        /* UI Transition Animations */
-        body[data-theme="white"] .page-section.active { animation: fadeUp 0.4s ease forwards; }
-        body[data-theme="black"] .page-section.active { animation: shadowPulse 0.5s ease forwards; }
-        body[data-theme="enderman"] .page-section.active { animation: glitchIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
-        body[data-theme="minecraft"] .page-section.active { animation: blockDrop 0.4s steps(4) forwards; }
-        body[data-theme="red"] .page-section.active { animation: aggressiveSlide 0.4s ease forwards; }
-        body[data-theme="green"] .page-section.active { animation: smoothGrow 0.5s ease forwards; }
+ase forwards; }
         body[data-theme="purple"] .page-section.active { animation: royalReveal 0.6s ease forwards; }
         body[data-theme="windows"] .page-section.active { animation: fluentFade 0.4s ease-out forwards; }
         body[data-theme="android"] .page-section.active { animation: materialRipple 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes shadowPulse { 0% { opacity: 0; filter: brightness(0.5); } 100% { opacity: 1; filter: brightness(1); } }
-        @keyframes glitchIn { 0% { opacity: 0; transform: translateX(-10px) skewX(10deg); filter: hue-rotate(90deg); } 100% { opacity: 1; transform: translateX(0) skewX(0); filter: hue-rotate(0); } }
-        @keyframes blockDrop { 0% { opacity: 0; transform: translateY(-40px); } 100% { opacity: 1; transform: translateY(0); } }
-        @keyframes aggressiveSlide { 0% { opacity: 0; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes fadeUp { from {  scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes smoothGrow { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes royalReveal { 0% { opacity: 0; filter: blur(10px); } 100% { opacity: 1; filter: blur(0); } }
         @keyframes fluentFade { 0% { opacity: 0; transform: translateY(10px) scale(0.98); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
@@ -106,33 +81,7 @@
 </head>
 <body>
     <div id="sidebar">
-        <div class="brand">
-            <span>🍉</span> Craft CanvaS
-        </div>
-        <div class="nav-group">
-            <div id="nav-profile" class="nav-item" onclick="switchTab(this, 'profile')"><span>👤</span> My Profile</div>
-            <div class="nav-item active" onclick="switchTab(this, 'mods')"><span>⛏️</span> Mod Manager</div>
-            <div class="nav-item" onclick="switchTab(this, 'local-mods')"><span>📁</span> Local Inspector</div>
-            <div class="nav-item" onclick="switchTab(this, 'launcher')"><span>🎮</span> Launcher</div>
-            <div class="nav-item" onclick="switchTab(this, 'editor')"><span>🖌️</span> Image Editor</div>
-            <div class="nav-item" onclick="switchTab(this, 'web')"><span>🌐</span> Websites</div>
-            <div class="nav-item" onclick="switchTab(this, 'creator')"><span>🎥</span> Creator Hub</div>
-            <div class="nav-item" onclick="switchTab(this, 'chat')"><span>💬</span> Global Chat</div>
-            <div class="nav-item" onclick="switchTab(this, 'shop')"><span>🛒</span> Theme Shop</div>
-        </div>
-    </div>
-    
-    <div id="main-wrapper">
-        <div id="header">
-            <div class="greeting">
-                <h1 id="user-greeting">Hello, Creator!</h1>
-                <p id="sub-greeting">How can I help you today?</p>
-            </div>
-            <div style="display: flex; gap: 16px; align-items: center;">
-                <button class="action-button accent" onclick="document.getElementById('image-upload').click()">📁 Add Image</button>
-                <div class="profile-widget" onclick="switchTab(document.getElementById('nav-profile'), 'profile')">
-                    <img id="widget-avatar" src="" class="profile-avatar" style="display: none;">
-                    <div id="widget-initial" class="profile-avatar">?</div>
+?</div>
                     <div style="font-weight: 700; color: var(--text-main);" id="widget-name">Guest</div>
                 </div>
             </div>
@@ -149,57 +98,14 @@
                     <div style="display: flex; gap: 24px; width: 100%; max-width: 700px; margin-bottom: 40px;">
                         <div style="flex: 1; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; text-align: center;">
                             <div style="font-size: 0.9rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Your Wallet</div>
-                            <div style="font-size: 2.5rem; font-weight: 800; color: #fbbf24;"><span id="profile-coin-balance">0</span> 🪙</div>
-                        </div>
-                        <div style="flex: 1.5; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; text-align: left;">
-                            <div style="font-size: 0.9rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Achievements & Tags</div>
-                            <div id="profile-badges-container" style="min-height: 40px; display: flex; align-items: center; flex-wrap: wrap;"></div>
-                        </div>
-                    </div>
-
-                    <div style="width: 100%; max-width: 700px; text-align: left; margin-bottom: 40px;">
-                        <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 16px;">UI Wardrobe</h3>
-                        <div id="profile-wardrobe-grid" style="display: flex; gap: 12px; flex-wrap: wrap;"></div>
-                    </div>
-
-                    <div style="display: flex; gap: 16px; width: 100%; max-width: 700px; border-top: 1px solid var(--border-color); padding-top: 30px;">
-                        <button class="action-button" style="flex: 1; color: var(--watermelon-pink); border-color: var(--border-color);" onclick="clearLocalData()">🧹 Clear Cached Data</button>
-                        <button class="action-button primary" style="flex: 1; background: var(--watermelon-pink);" onclick="logoutUser()">🚪 Secure Log Out</button>
-                    </div>
-
-                    <div style="margin-top: 40px; text-align: center; width: 100%;">
-                        <iframe src="https://abhehe123.github.io/craftcanvas-launcher/ad-banner.html" width="728" height="90" frameborder="0" scrolling="no" style="border-radius: 8px; border: 1px solid var(--border-color);"></iframe>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="mods" class="page-section active">
-                <div id="mod-browse-view" class="mod-layout">
+                    
                     <div class="mod-sidebar">
                         <div style="color: var(--soft-purple); font-size: 20px; font-weight: 800; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px;">
                             <span>📦</span> Modrinth DB
                         </div>
                         <h3 class="mod-sidebar-title">Sort By</h3>
                         <select id="sort-filter" class="mod-select" onchange="executeSearch()"><option value="relevance">Relevance</option><option value="downloads">Downloads</option><option value="follows">Followers</option><option value="newest">Date Published</option><option value="updated">Date Updated</option></select>
-                        <h3 class="mod-sidebar-title">Project Type</h3>
-                        <select id="type-filter" class="mod-select" onchange="executeSearch()"><option value="mod">Mods</option><option value="resourcepack">Resource Packs</option><option value="shader">Shaders</option><option value="modpack">Modpacks</option></select>
-                        <h3 class="mod-sidebar-title">Game Version</h3>
-                        <select id="version-filter" class="mod-select" onchange="executeSearch()"><option value="">All Versions</option></select>
-                        <h3 class="mod-sidebar-title">Loader</h3>
-                        <select id="loader-filter" class="mod-select" onchange="executeSearch()"><option value="">All Loaders</option></select>
-                        <h3 class="mod-sidebar-title">Content Category</h3>
-                        <select id="category-filter" class="mod-select" onchange="executeSearch()"><option value="">All Categories</option><option value="adventure">Adventure</option><option value="cursed">Cursed</option><option value="decoration">Decoration</option><option value="economy">Economy</option><option value="equipment">Equipment</option><option value="food">Food</option><option value="game-mechanics">Game Mechanics</option><option value="library">Library</option><option value="magic">Magic</option><option value="management">Management</option><option value="minigame">Minigame</option><option value="mobs">Mobs</option><option value="optimization">Optimization</option><option value="social">Social</option><option value="storage">Storage</option><option value="technology">Technology</option><option value="transportation">Transportation</option><option value="utility">Utility</option><option value="worldgen">World Generation</option></select>
-                    </div>
-                    
-                    <div class="mod-main">
-                        <input type="text" id="search-input" class="mod-search-bar" style="margin-bottom: 20px;" placeholder="Search for mods, shaders, plugins and more...">
-                        <div id="mod-grid" class="mod-grid"></div>
-                        <div id="pagination-controls" style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 30px; padding-bottom: 20px;"></div>
-                        <div id="recommended-container" style="display: none;">
-                            <h2 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: var(--text-main);">✨ Recommended For You</h2>
-                            <div id="recommended-grid" class="horizontal-scroll"></div>
-                        </div>
-                    </div>
+                        <h3 class="m
                 </div>
 
                 <div id="mod-details-view" style="display: none; height: 100%;">
