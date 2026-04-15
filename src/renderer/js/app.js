@@ -4,19 +4,7 @@
 // 🛒 ECONOMY, THEME & PROFILE SYSTEM
 // ==========================================
 const THEMES = {
-    'white': { name: 'Default White', cost: 0, css: { '--bg-main': '#f8f9fd', '--bg-card': '#ffffff', '--text-main': '#1a1d23', '--soft-purple': '#9d8df1', '--text-secondary': '#64748b', '--watermelon-pink': '#FF7B7B', '--border-radius': '18px' } },
-    'black': { name: 'Midnight Black', cost: 0, css: { '--bg-main': '#0b0e14', '--bg-card': '#161b22', '--text-main': '#f0f6fc', '--soft-purple': '#58a6ff', '--text-secondary': '#8b949e', '--border-radius': '18px' } },
-    'red': { name: 'Rose Crimson', cost: 1200, css: { '--bg-main': '#450a0a', '--bg-card': '#7f1d1d', '--text-main': '#fef2f2', '--soft-purple': '#ef4444', '--text-secondary': '#fca5a5', '--border-radius': '18px' } },
-    'green': { name: 'Emerald Forest', cost: 3000, css: { '--bg-main': '#064e3b', '--bg-card': '#065f46', '--text-main': '#ecfdf5', '--soft-purple': '#10b981', '--text-secondary': '#a7f3d0', '--border-radius': '18px' } },
-    'purple': { name: 'Royal Amethyst', cost: 9000, css: { '--bg-main': '#2e1065', '--bg-card': '#4c1d95', '--text-main': '#f5f3ff', '--soft-purple': '#8b5cf6', '--text-secondary': '#ddd6fe', '--border-radius': '18px' } },
-    'enderman': { name: 'The End (Enderman)', cost: 38900, css: { '--bg-main': '#000000', '--bg-card': '#0a0a0a', '--text-main': '#d8b4fe', '--soft-purple': '#a855f7', '--text-secondary': '#7e22ce', '--font-family': "'Courier New', monospace", '--border-radius': '8px' } },
-    'minecraft': { name: 'Classic Craft', cost: 100000, css: { '--bg-main': '#312c26', '--bg-card': '#4d4d4d', '--text-main': '#ffffff', '--soft-purple': '#3ca43c', '--text-secondary': '#bfbfbf', '--font-family': "Impact, fantasy", '--border-radius': '0px' } },
-    'windows': { name: 'Fluent Windows', cost: 370000, css: { '--bg-main': '#f3f3f3', '--bg-card': '#ffffff', '--text-main': '#000000', '--soft-purple': '#0078d4', '--text-secondary': '#505050', '--font-family': "'Segoe UI Variable', sans-serif", '--border-radius': '4px' } },
-    'android': { name: 'Material You', cost: 500000, css: { '--bg-main': '#f7fcf3', '--bg-card': '#e1e5dc', '--text-main': '#191c19', '--soft-purple': '#386a20', '--text-secondary': '#414941', '--font-family': "'Roboto', sans-serif", '--border-radius': '28px' } }
-};
-
-const MAX_COINS = 1000000;
-let coinTimer = null;
+    'white':
 
 function ensureEconomyData() {
     if (!userProfile) return;
@@ -163,25 +151,7 @@ function parseModName(filename) {
     else if (lower.includes('neoforge')) loader = "NeoForge";
     else if (lower.includes('optifine')) loader = "OptiFine";
 
-    const verMatch = filename.match(/1\.\d+(\.\d+)?/);
-    if (verMatch) version = verMatch[0];
 
-    return { loader, version, cleanName: filename.replace(/\.(jar|zip)$/i, '') };
-}
-
-async function loadLocalMods() {
-    try {
-        const activeList = document.getElementById('local-mods-list');
-        const trashList = document.getElementById('trash-mods-list');
-        const filterEl = document.getElementById('local-loader-filter');
-        const filter = filterEl ? filterEl.value.toLowerCase() : 'all';
-
-        if (!activeList || !trashList) return;
-
-        activeList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">Loading...</div>';
-        trashList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">Loading...</div>';
-
-        const activeMods = await window.electronAPI.getLocalMods();
         const trashMods = await window.electronAPI.getTrashMods();
 
         function renderList(mods, container, isTrash) {
@@ -255,23 +225,6 @@ function toggleLocalView(view) {
     document.getElementById('local-mods-list').style.display = view === 'active' ? 'flex' : 'none';
     document.getElementById('trash-mods-list').style.display = view === 'trash' ? 'flex' : 'none';
 }
-
-async function trashMod(filename) {
-    await window.electronAPI.moveToTrash(filename);
-    loadLocalMods();
-}
-
-async function recoverMod(filename) {
-    await window.electronAPI.recoverFromTrash(filename);
-    loadLocalMods();
-}
-
-let chatUnsubscribe = null;
-let activeSentMessages = []; 
-
-function escapeHTML(str) {
-    return str.replace(/[&<>'"]/g, tag => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
     }[tag]));
 }
 
@@ -327,23 +280,7 @@ function stopChatListener() {
 
 function sendChatMessage() {
     if (!userProfile) {
-        alert("You must log in to use the Global Chat!");
-        document.getElementById('onboarding-modal').style.display = 'flex';
-        return;
-    }
-    
-    const input = document.getElementById('chat-input');
-    const text = input.value.trim();
-    if (!text) return;
 
-    input.value = '';
-
-    db.collection('global_chat').add({
-        uid: userProfile.uid,
-        author: userProfile.name,
-        text: text,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then((docRef) => {
         activeSentMessages.push(docRef);
         setTimeout(() => {
             docRef.delete().then(() => {
@@ -382,16 +319,6 @@ if (window.electronAPI && window.electronAPI.onCleanupAndQuit) {
 
 // ==========================================
 // FIREBASE CONFIGURATION (RESTORED)
-// ==========================================
-const firebaseConfig = {
-    apiKey: "AIzaSyB-QkYOUKPIm0BAGXgyRsIJnIeg9XZrzjE",
-    authDomain: "craftcanvas-c76de.firebaseapp.com",
-    projectId: "craftcanvas-c76de",
-    storageBucket: "craftcanvas-c76de.firebasestorage.app",
-    messagingSenderId: "640072585191",
-    appId: "1:640072585191:web:c0c0e740845a57f79a3742",
-    measurementId: "G-6J6LTDZRQT"
-};
 
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
@@ -400,23 +327,7 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 let currentPage = 0;
-const MODS_PER_PAGE = 20;
-let currentOpenedModDetails = null;
 
-// ==========================================
-// ONBOARDING, GOOGLE AUTH & PROFILE SYSTEM
-// ==========================================
-let userProfile = JSON.parse(localStorage.getItem('cc_profile')) || null;
-let downloadHistory = JSON.parse(localStorage.getItem('cc_history')) || {};
-
-function checkOnboarding() {
-    if (!userProfile) {
-        document.getElementById('onboarding-modal').style.display = 'flex';
-    } else {
-        updateProfileWidget();
-        loadRecommendations();
-        fetchGlobalStats(); 
-    }
 }
 
 function validateAuthForm() {
